@@ -1,0 +1,21 @@
+Welcome to Prime Minister Trivia!
+
+If you were wondering anything about UK's prime ministers, like the answer to these two questions was:
+
+1. How old is Tony Blair?
+
+2. Where was David Cameron born?
+
+then you can simply deploy the primeMinisters.war into your normal application server(I used Tomcat 7).
+
+At this point you can view the aswers accesing these urls:
+
+1. http://localhost:8080/primeMinisters/primeMinisters/ageOf/Tony%20Blair
+   http://localhost:8080/primeMinisters/primeMinisters/answerQuestion/How%20old%20is%20Tony%20Blair%3F
+
+2. http://localhost:8080/primeMinisters/primeMinisters/birthPlaceOf/David%20Cameron
+   http://localhost:8080/primeMinisters/primeMinisters/answerQuestion/Where%20was%20David%20Cameron%20born%3F
+
+You can replace the names with any other UK prime minister of your choosing.
+
+You can also find the source files of this project in primeMinisters.zip.
