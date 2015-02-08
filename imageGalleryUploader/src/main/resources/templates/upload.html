@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="http://cdn.jsdelivr.net/webjars/jquery/2.1.1/jquery.min.js"
+	th:src="@{/webjars/jquery/2.1.1/jquery.min.js}"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		$("#addImageBtn").on("click", function() {
+			$("#addAnotherImage").prop('checked', true);
+			$("#uploadForm").submit();
+		})
+	});
+</script>
+<head>
+<title th:text="#{title.application}"></title>
+<link rel="stylesheet" type="text/css" media="all" href="/stsm.css"
+	th:href="@{/stsm.css}" />
+</head>
+<body>
+	<h2 th:text="#{title.application}">Image Gallery Uploader</h2>
+	<form id="uploadForm" action="#" th:action="@{/upload}"
+		th:object="${uploadForm}" method="post" enctype="multipart/form-data">
+
+		<!-- <ul th:if="${#fields.hasErrors('*')}" class="errorlist">
+				<li th:each="err : ${#fields.errors('*')}" th:text="${err}">Input
+					is incorrect</li>
+			</ul>
+			-->
+
+		<div class="imageFields"
+			th:each="fileDescription, status : ${uploadForm.fileDescriptions}">
+			<fieldset>
+				<div>
+					<label th:for="|fileDescriptions[${status.index}].file|"> <span
+						th:text="#{uploadForm.imageFile}">Image File</span>
+					</label> <input type="file" th:attr="accept=${supportedExtensions}"
+						th:field="*{fileDescriptions[__${status.index}__].file}"
+						th:errorclass="fieldError" />
+				</div>
+
+				<div>
+					<label for="|fileDescriptions[${status.index}].name|"> <span
+						th:text="#{uploadForm.name}">Name</span>
+					</label> 
+					<input type="text"
+						th:field="*{fileDescriptions[__${status.index}__].name}"
+						th:errorclass="fieldError" />
+				</div>
+				<div>
+					<label th:for="|fileDescriptions[${status.index}].defaultName|"
+						th:text="#{uploadForm.defaultName}">Default filename as
+						alt_tag/caption</label> <input type="checkbox"
+						th:field="*{fileDescriptions[__${status.index}__].defaultName}" />
+				</div>
+
+				<div>
+					<label for="|fileDescriptions[${status.index}].altTag|"> <span
+						th:text="#{uploadForm.altTag}">alt tag</span>
+					</label> <input type="text"
+						th:field="*{fileDescriptions[__${status.index}__].altTag}"
+						th:errorclass="fieldError" />
+				</div>
+
+				<div>
+					<label for="|fileDescriptions[${status.index}].caption|"> <span
+						th:text="#{uploadForm.caption}">caption</span>
+					</label> <input type="text"
+						th:field="*{fileDescriptions[__${status.index}__].caption}"
+						th:errorclass="fieldError" />
+				</div>
+			</fieldset>
+		</div>
+
+		<input type="checkbox" hidden="true" id="addAnotherImage"
+			th:field="*{addAnotherImage}" />
+		<button id="addImageBtn" type="button"
+			th:text="#{uploadForm.addImageBtn}">Add another image</button>
+
+		<div class="submit">
+			<button type="submit" name="upload" th:text="#{uploadForm.upload}">Upload</button>
+		</div>
+
+	</form>
+
+</body>
+</html>

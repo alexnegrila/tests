@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org">
+<script src="http://cdn.jsdelivr.net/webjars/jquery/2.1.1/jquery.min.js"
+	th:src="@{/webjars/jquery/2.1.1/jquery.min.js}"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		/* alert("ready!"); */
+	});
+</script>
+<head>
+<title th:text="#{title.application}"></title>
+<link rel="stylesheet" type="text/css" media="all" href="/stsm.css"
+	th:href="@{/stsm.css}" />
+</head>
+<body>
+	
+	<ul>
+		<li th:each="result : ${results}" th:text="${result}">
+		</li>
+	</ul>
+	<a href="upload">Back to image upload page</a>
+</body>
+</html>
