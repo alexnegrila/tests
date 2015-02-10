@@ -1,36 +1,44 @@
 package org.alexcoders.imageGalleryUploader.controllers;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.alexcoders.imageGalleryUploader.dtos.FileDescription;
 import org.alexcoders.imageGalleryUploader.dtos.UploadForm;
+import org.alexcoders.imageGalleryUploader.models.ImageDescription;
+import org.alexcoders.imageGalleryUploader.services.ImageDescriptionService;
 import org.alexcoders.imageGalleryUploader.utils.FileNameUtils;
 import org.apache.commons.imaging.ImageFormats;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.multipart.MultipartFile;
+
+import com.mongodb.gridfs.GridFSDBFile;
 
 @Controller
 public class FileUploadController {
 
 	private static final String UPLOAD_VIEW = "upload";
 	private static final String RESULTS_VIEW = "results";
+	
+	@Autowired
+	ImageDescriptionService imageDescriptionService;
+	
+	@Autowired
+	FileNameUtils fileNameUtils;
 
 	@ModelAttribute("supportedExtensions")
 	public String getSupportedExtensions() {
-		StringBuilder builder = new StringBuilder(".jpg,");
-		for (int i = 1; i < ImageFormats.values().length; i++) {
-			ImageFormats imageFormat = ImageFormats.values()[i];
-			builder.append(".").append(imageFormat.getExtension().toLowerCase());
-			if (i != ImageFormats.values().length - 1) {
+		StringBuilder builder = new StringBuilder();
+		List<String> supportedExtensions = fileNameUtils.getSupportedExtensions();
+		for (int i = 1; i < supportedExtensions.size(); i++) {
+			builder.append(".").append(supportedExtensions.get(i).toLowerCase());
+			if (i != supportedExtensions.size() - 1) {
 				builder.append(",");
 			}
 		}
@@ -49,13 +57,13 @@ public class FileUploadController {
 		}
 		modelMap.addAttribute("uploadForm", uploadForm);
 		return UPLOAD_VIEW;
-		// return "You can upload a file by posting to this same URL.";
 	}
 
 	@RequestMapping(value = "/upload", method = RequestMethod.POST)
 	public String handleFileUpload(@ModelAttribute("uploadForm") UploadForm uploadForm, ModelMap modelMap,
 			BindingResult bindingResult) {
 		List<FileDescription> fileDescriptions = uploadForm.getFileDescriptions();
+		
 		if (uploadForm.isAddAnotherImage()) {
 			fileDescriptions.add(new FileDescription());
 			uploadForm.setAddAnotherImage(false);
@@ -63,32 +71,35 @@ public class FileUploadController {
 			return UPLOAD_VIEW;
 		}
 
-		List<String> results = new ArrayList<String>();
-		for (FileDescription fileDescription : fileDescriptions) {
-			MultipartFile file = fileDescription.getFile();
-			String originalFilename = file.getOriginalFilename();
-			String name = FileNameUtils.getFileName(originalFilename, fileDescription);
-			if (!file.isEmpty()) {
-				if (!FileNameUtils.isExtensionSupported(originalFilename)) {
-					results.add("Extension is not supported for file " + originalFilename + "!");
-				} else {
+		imageDescriptionService.save(fileDescriptions);
+		List<String> results = getResults(fileDescriptions);
+		
+		modelMap.addAttribute("results", results  );
+		return RESULTS_VIEW;
+	}
 
-					try {
-						byte[] bytes = file.getBytes();
-						BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(name)));
-						stream.write(bytes);
-						stream.close();
-						results.add("You successfully uploaded " + originalFilename + " under name " + name + "!");
-					} catch (Exception e) {
-						results.add("You failed to upload " + originalFilename + " => " + e.getMessage());
-					}
+	private List<String> getResults(List<FileDescription> fileDescriptions) {
+		List<String> results = new ArrayList<String>();
+		Map<ImageDescription, GridFSDBFile> images = imageDescriptionService.getImages(fileDescriptions);
+		
+		for (FileDescription fileDescription : fileDescriptions) {
+			
+			String fileName = fileNameUtils.getFileName( fileDescription);
+			boolean filefound = false;
+			for (ImageDescription imageDescription : images.keySet()) {
+				GridFSDBFile gridFSDBFile = images.get(imageDescription);
+				if (gridFSDBFile.getFilename().equals(fileName)) {
+					filefound = true;
+					break;
 				}
+			}
+			if (filefound) {
+				results.add("You successfully uploaded image" + fileName + "!");
 			} else {
-				results.add("You failed to upload " + originalFilename + " because the file was empty.");
+				results.add("You failed to upload " + fileName );
 			}
 		}
-		modelMap.addAttribute("results", results);
-		return RESULTS_VIEW;
+		return results;
 	}
 
 	@RequestMapping(value = "/" + RESULTS_VIEW, method = RequestMethod.GET)
